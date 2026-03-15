@@ -1,6 +1,6 @@
-FROM quay.io/pypa/manylinux2014_x86_64
+FROM quay.io/pypa/manylinux_2_34_x86_64
 
-RUN yum update -y && yum install -y curl wget
+RUN dnf update -y && dnf install -y curl wget
 
 ENV PATH /opt/python/cp310-cp310/bin:${PATH}
 ENV CMAKE_MODULE_PATH /opt/python/cp310-cp310/lib/cmake:/usr/local/lib64/cmake/
@@ -10,8 +10,8 @@ ENV CMAKE_MODULE_PATH /opt/python/cp310-cp310/lib/cmake:/usr/local/lib64/cmake/
 #
 
 
-RUN yum groupinstall -y 'Development Tools' && \
-    yum install -y autoconf git
+RUN dnf groupinstall -y 'Development Tools' && \
+    dnf install -y autoconf git
 
 RUN pip install cmake && ln -s /opt/python/cp310-cp310/bin/cmake /usr/bin/cmake
 
