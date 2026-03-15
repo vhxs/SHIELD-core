@@ -63,7 +63,6 @@ include_directories( ${OpenFHE_INCLUDE}/binfhe )
 include_directories(/openFHE/fmt/include/)
 
 include_directories(${Python3_INCLUDE_DIRS})
-include_directories(${Python3_ROOT_DIR}/include/python3.10)
 include_directories(${Python3_ROOT_DIR}/include)
 include_directories(${Boost_INCLUDE_DIRS})
 
@@ -83,7 +82,7 @@ set_property(TARGET pyOpenFHE PROPERTY VERSION 1)
 set_property(TARGET pyOpenFHE PROPERTY SOVERSION 1)
 set_property(TARGET pyOpenFHE PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/)
 set_property(TARGET pyOpenFHE PROPERTY PREFIX "")
-install(TARGETS pyOpenFHE DESTINATION lib)
+install(TARGETS pyOpenFHE DESTINATION .)
 
 target_link_directories(pyOpenFHE PUBLIC ${pyOpenFHE_DIR}/lib)
 

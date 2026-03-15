@@ -138,8 +138,7 @@ ndarray CKKSCryptoContext::decrypt(const PrivateKey<DCRTPoly> &privateKey,
                                    pyOpenFHE_CKKS::CKKSCiphertext &ctxt) {
   Plaintext ptxt;
   // level reduce to level2 before decrypting
-  auto algo = ctxt.cipher->GetCryptoContext()->GetScheme();
-  auto ctxt2 = algo->Compress(ctxt.cipher, 2);
+  auto ctxt2 = ctxt.cipher->GetCryptoContext()->Compress(ctxt.cipher, 2);
   context->Decrypt(privateKey, ctxt2, &ptxt);
   ptxt->SetLength(ctxt.cipher->GetEncodingParameters()->GetBatchSize());
   auto cvals = ptxt->GetRealPackedValue();
@@ -236,7 +235,7 @@ void CKKSCryptoContext::evalPowerOf2RotationKeyGen(
     index_list.push_back(-r);
     r *= 2;
   }
-  context->EvalAtIndexKeyGen(privateKey, index_list, nullptr);
+  context->EvalAtIndexKeyGen(privateKey, index_list);
 }
 
 } // namespace pyOpenFHE_CKKS

@@ -1,0 +1,49 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-wheel:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # required to create GitHub Releases
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Cache Docker layers so the expensive OpenFHE/Boost/fmt builds
+      # only run on the first tag push (or when the Dockerfile changes).
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: shield-build:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build wheel
+        run: |
+          mkdir -p wheelhouse
+          # Strip the leading 'v' so the Python package version is PEP 440-compliant.
+          # e.g. tag "v1.0.5" → version "1.0.5"
+          VERSION="${GITHUB_REF_NAME#v}"
+          docker run --rm \
+            -v "${{ github.workspace }}/wheelhouse:/wheelhouse" \
+            -e SKBUILD_PROJECT_VERSION="$VERSION" \
+            shield-build
+
+      - name: Show built wheels
+        run: ls -lh wheelhouse/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: wheelhouse/*.whl
+          generate_release_notes: true

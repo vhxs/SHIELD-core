@@ -1,13 +1,12 @@
 ﻿// (c) 2021-2024 The Johns Hopkins University Applied Physics Laboratory LLC (JHU/APL).
 
-// python bindings for OpenFHE's BGV and CKKS functionality
+// python bindings for OpenFHE's CKKS functionality
 
 #include <boost/python.hpp>
 #include <boost/python/numpy.hpp>
 // nested scopes
 #include <boost/python/scope.hpp>
 
-#include "bgv/bindings.hpp"
 #include "ckks/bindings.hpp"
 #include "utils/enums_binding.hpp"
 #include "utils/exceptions.hpp"
@@ -77,29 +76,6 @@ BOOST_PYTHON_MODULE(pyOpenFHE) {
                scope CKKS_CNN_scope = CKKS_CNN_module;
 
                export_he_cnn_functions_boost();
-          }
-     }
-
-     {
-          using namespace pyOpenFHE_BGV;
-
-          // this supposedly makes "from pyOpenFHE.BGV import <thing>" work
-          object BGV_module(handle<>(borrowed(PyImport_AddModule("pyOpenFHE.BGV"))));
-
-          package.attr("BGV") = BGV_module;
-
-          // so we no longer need a dummy class
-          scope BGV_scope = BGV_module;
-
-          export_BGV_CryptoContext_boost();
-          export_BGV_Ciphertext_boost();
-          {
-               object BGV_serialization_module(handle<>(borrowed(PyImport_AddModule("pyOpenFHE.BGV.serial"))));
-               BGV_scope.attr("serial") = BGV_serialization_module;
-
-               scope BGV_serialization_scope = BGV_serialization_module;
-
-               export_BGV_serialization_boost();
           }
      }
 
