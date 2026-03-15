@@ -84,7 +84,7 @@ pyOpenFHE_CKKS::CKKSCiphertext convolution_helper_image_sharded(const pyOpenFHE_
                                                 int num_out_channels_per_shard,
                                                 int fragment_offset,
                                                 int shard_offset,
-                                                std::vector<long int> &sigma) {
+                                                std::vector<int64_t> &sigma) {
     // math!
     auto ciphertext = ciphertext_rotations(0, 0);
     int shard_size = ciphertext.getBatchSize();
