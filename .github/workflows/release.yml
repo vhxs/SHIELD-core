@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Cache Docker layers so the expensive OpenFHE/fmt builds
       # only run on the first tag push (or when the Dockerfile changes).
@@ -39,7 +39,7 @@ jobs:
         run: ls -lh wheelhouse/
 
       - name: Upload wheel artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wheel-linux
           path: wheelhouse/*.whl
@@ -48,14 +48,14 @@ jobs:
     runs-on: macos-latest  # Apple Silicon (arm64)
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install build tools
         run: brew install cmake ninja fmt libomp
 
       - name: Cache OpenFHE build
         id: cache-openfhe
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: /usr/local
           key: openfhe-macos-arm64-${{ hashFiles('Dockerfile') }}
@@ -79,7 +79,7 @@ jobs:
           sudo ninja -C /tmp/openfhe/build install
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
@@ -97,7 +97,7 @@ jobs:
         run: ls -lh wheelhouse/
 
       - name: Upload wheel artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wheel-macos
           path: wheelhouse/*.whl
@@ -110,7 +110,7 @@ jobs:
 
     steps:
       - name: Download all wheels
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: wheel-*
           path: wheelhouse/
