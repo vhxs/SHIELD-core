@@ -17,7 +17,8 @@ namespace pyOpenFHE {
 
 // Owning N-dimensional row-major array backed by a flat std::vector.
 // Element access via operator()(i, j, ...), shape via extent(dim).
-// Exposes a non-owning std::experimental::mdspan view via view().
+// TODO: add view() returning std::mdspan once libstdc++ in the build
+// environment ships <mdspan> (gcc-toolset-14 on manylinux_2_34 omits it).
 template<typename T, std::size_t Rank>
 class MDArray {
   std::vector<T> data_;
