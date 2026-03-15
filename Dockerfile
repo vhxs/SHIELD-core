@@ -56,6 +56,6 @@ CMD set -ex; \
     cd /openFHE/openFHE-python && \
     uv build --wheel --out-dir /wheelhouse/tmp/; \
     cd /; \
-    LD_LIBRARY_PATH=/opt/python/cp310-cp310/lib auditwheel repair /wheelhouse/tmp/openfhe-*.whl; \
+    LD_LIBRARY_PATH=/opt/python/cp310-cp310/lib auditwheel repair -w /wheelhouse/ /wheelhouse/tmp/openfhe-*.whl; \
     chmod -R 777 ./wheelhouse
     
