@@ -3,26 +3,18 @@
 #ifndef HE_CNN_LINEAR_H
 #define HE_CNN_LINEAR_H
 
-// pooling stuff
-
 #include <vector>
-#include <complex>
 
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
 
 #include "boost/multi_array.hpp"
 #include "utils/utils.hpp"
 
-using namespace pyOpenFHE;
-using namespace pyOpenFHE_CKKS;
-using namespace boost::python;
-using namespace boost::python::numpy;
+namespace py = pybind11;
 
 namespace pyOpenFHE_CKKS {
-    
-    pyOpenFHE_CKKS::CKKSCiphertext linear(const boost::python::list &py_shards, const ndarray &npweights, const int mtx_size, const ndarray &permutation, const int pool_factor);
-
+    pyOpenFHE_CKKS::CKKSCiphertext linear(const py::list &py_shards, const py::array_t<double, py::array::forcecast> &npweights, const int mtx_size, const py::array_t<double, py::array::forcecast> &permutation, const int pool_factor);
 }
 
 #endif

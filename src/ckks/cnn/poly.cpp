@@ -1,19 +1,19 @@
 // (c) 2021-2024 The Johns Hopkins University Applied Physics Laboratory LLC (JHU/APL).
 
+#include <pybind11/pybind11.h>
+
 #include "ckks/CKKS_ciphertext_extension.hpp"
 #include "ckks/cnn/poly.hpp"
 
 #include <stdexcept>
 #include <fmt/format.h>
-
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
-#include <boost/python/scope.hpp>
 #include <omp.h>
 #include <cstdlib>
 
 #include "math/chebyshev.h"
 
+namespace py = pybind11;
+using namespace pyOpenFHE;
 
 double normalCDF(double value) {
    return 0.5 * erfc(-value * M_SQRT1_2);
@@ -32,20 +32,20 @@ double cpp_relu(double x) {
     return x;
 }
 
-boost::python::list pyOpenFHE_CKKS::fhe_gelu(const boost::python::list &py_shards, int degree, double bound) {
+py::list pyOpenFHE_CKKS::fhe_gelu(const py::list &py_shards, int degree, double bound) {
 
-    int num_input_shards = len(py_shards);
+    int num_input_shards = static_cast<int>(py_shards.size());
     std::vector<pyOpenFHE_CKKS::CKKSCiphertext> shards(num_input_shards);
     for(int i = 0 ; i < num_input_shards; ++i) {
-        shards[i] = extract<pyOpenFHE_CKKS::CKKSCiphertext>(py_shards[i]);
+        shards[i] = py_shards[i].cast<pyOpenFHE_CKKS::CKKSCiphertext>();
     }
 
     int level = shards[0].getTowersRemaining() - 2;
     if(
-        (level <= 2) || 
-        ((degree <= 5) && (level < 3)) || 
-        ((degree <= 13) && (degree >= 6) && (level < 4)) || 
-        ((degree <= 27) && (degree >= 14) && (level < 5)) || 
+        (level <= 2) ||
+        ((degree <= 5) && (level < 3)) ||
+        ((degree <= 13) && (degree >= 6) && (level < 4)) ||
+        ((degree <= 27) && (degree >= 14) && (level < 5)) ||
         ((degree <= 59) && (degree >= 28) && (level < 6)) ||
         ((degree <= 119) && (degree >= 60) && (level < 7)) ||
         ((degree <= 200) && (degree >= 120) && (level < 8))
@@ -61,11 +61,10 @@ boost::python::list pyOpenFHE_CKKS::fhe_gelu(const boost::python::list &py_shard
         shards[i].cipher = cc->EvalChebyshevSeries(shards[i].cipher, coefficients, -1.0, 1.0);
     }
 
-    boost::python::list res = pyOpenFHE::make_list(num_input_shards);
+    py::list res = pyOpenFHE::make_list(num_input_shards);
     for(int i = 0 ; i < num_input_shards; ++i) {
         res[i] = shards[i];
     }
 
     return res;
-
 }

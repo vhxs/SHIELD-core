@@ -7,66 +7,41 @@
 #include <vector>
 
 #include "boost/multi_array.hpp"
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
 
-using namespace boost::python;
-using namespace boost::python::numpy;
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
+#include <pybind11/stl.h>
+
+namespace py = pybind11;
 
 namespace pyOpenFHE {
 
-// TODO do these really belong in utils.hpp rather than he-cnn.hpp?
-// for kernel slicing
 typedef typename boost::multi_array<double, 2> boost_vector2d;
 typedef typename boost::multi_array<double, 4> boost_vector4d;
 typedef boost::multi_array_types::index_range srange;
 typedef typename boost_vector4d::array_view<4>::type boost_vector4d_slice;
 
-boost::python::list
-make_list(const std::size_t n,
-          boost::python::object item = boost::python::object() /* none */);
+py::list make_list(const std::size_t n, py::object item = py::none());
 
-// converts std::vector to python list, O(n) time
-list cppVectorToPythonList(const std::vector<double> &);
-
-list cppLongIntVectorToPythonList(const std::vector<int64_t> &vector);
-
-// O(n) std::vector to numpy array
-// could be faster if we didn't have use complex<double>
-// in that case we could just copy the vector contents to the numpy array
-// that's probably optimized or something, better than iteration
-ndarray cppDoubleVectorToNumpyList(const std::vector<double> &);
-
-ndarray cppLongIntVectorToNumpyList(const std::vector<int64_t> &vector);
-
-// these two are used for converting lists of indices for EvalAtIndexKeyGen
-// since they have to be ints, and we're on the static typing side of things
-std::vector<int> pythonListToCppIntVector(const list &);
-
-std::vector<int> numpyListToCppIntVector(const ndarray &);
-
-boost_vector4d numpyArrayToCppArray4D(const ndarray &nplist);
-boost_vector2d numpyArrayToCppArray2D(const ndarray &nplist);
-
-// conversion for complex<double>
-// for numpy arrays, the dtype must be specified to float/double or else C++
-// will throw a fit
-std::vector<double> numpyListToCppDoubleVector(const ndarray &);
-
-std::vector<double> pythonListToCppDoubleVector(const list &);
-
-std::vector<int64_t> pythonListToCppLongIntVector(const list &pylist);
-
-std::vector<int64_t> numpyListToCppLongIntVector(const ndarray &nplist);
+py::list cppVectorToPythonList(const std::vector<double> &);
+py::list cppLongIntVectorToPythonList(const std::vector<int64_t> &vector);
+py::array_t<double> cppDoubleVectorToNumpyList(const std::vector<double> &);
+py::array_t<int64_t> cppLongIntVectorToNumpyList(const std::vector<int64_t> &vector);
+std::vector<int> pythonListToCppIntVector(const py::list &);
+std::vector<int> numpyListToCppIntVector(const py::array_t<double, py::array::forcecast> &);
+boost_vector4d numpyArrayToCppArray4D(const py::array_t<double, py::array::forcecast> &nplist);
+boost_vector2d numpyArrayToCppArray2D(const py::array_t<double, py::array::forcecast> &nplist);
+std::vector<double> numpyListToCppDoubleVector(const py::array_t<double, py::array::forcecast> &);
+std::vector<double> pythonListToCppDoubleVector(const py::list &);
+std::vector<int64_t> pythonListToCppLongIntVector(const py::list &pylist);
+std::vector<int64_t> numpyListToCppLongIntVector(const py::array_t<double, py::array::forcecast> &nplist);
 
 } // namespace pyOpenFHE
 
 std::vector<int> sumOfPo2s(int);
-
 void tileVector(std::vector<double> &vals, unsigned int n);
 void tileVector(std::vector<int64_t> &vals, unsigned int n);
 void tileVector(std::vector<int> &vals, unsigned int n);
-
 template <typename T> void print_vector(std::vector<T> vec);
 
 #endif /* OpenFHE_PYTHON_UTILS_H */

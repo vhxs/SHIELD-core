@@ -1,18 +1,19 @@
 // (c) 2021-2024 The Johns Hopkins University Applied Physics Laboratory LLC (JHU/APL).
 
+#include <pybind11/pybind11.h>
+
 #include "ckks/cnn/pool.hpp"
 #include "ckks/CKKS_ciphertext_extension.hpp"
 
+namespace py = pybind11;
 using namespace pyOpenFHE;
 using namespace pyOpenFHE_CKKS;
-using namespace boost::python;
-using namespace boost::python::numpy;
 
 /*
 * Applies a stride-1 convolution with a kernel of 1s, and cyclic rotations (instead of logical).
 * The masking and dividing by 4 is accomplished by the downsample masks later,
 * so we can get away with a very simple convolution here.
-*/ 
+*/
 void pool_pre_convolution(std::vector<pyOpenFHE_CKKS::CKKSCiphertext>& shards, int num_cols) {
     int num_input_shards = shards.size();
 
@@ -45,7 +46,7 @@ void pool_horizontal_reduce(std::vector<pyOpenFHE_CKKS::CKKSCiphertext>& shards,
     std::vector<std::vector<double>> horizontal_masks(half_num_cols, std::vector<double>(shard_size));
     #pragma omp parallel for
     for (int i = 0 ; i < half_num_cols; ++i) { // column index, also vector index
-    	for (int j = 0; j < num_rows; ++j) { // row index 
+    	for (int j = 0; j < num_rows; ++j) { // row index
     		for (int k = 0; k < num_physical_channels_per_shard; ++k) { // channel index
     			horizontal_masks[i][i + j * num_cols + k * channel_size] = fill_value;
     		}
@@ -108,6 +109,7 @@ void pool_vertical_reduce_image_sharded(std::vector<pyOpenFHE_CKKS::CKKSCipherte
     }
 
 }
+
 
 void pool_vertical_reduce_channel_sharded(std::vector<pyOpenFHE_CKKS::CKKSCiphertext>& shards, int num_rows, int num_cols) {
     int num_input_shards = shards.size();
@@ -188,7 +190,7 @@ std::vector<pyOpenFHE_CKKS::CKKSCiphertext> pool_consolidate_and_duplicate_image
     if (new_duplication_ratio == 2) {
         // this is simplified because we know we must have num_input_shards = 2 .
         int r = half_num_rows * half_num_cols;
-        
+
         shards[1] >>= (2 * r);
         shards[0] += shards[1];
         shards[0] += shards[0] >> r;
@@ -245,7 +247,7 @@ std::vector<pyOpenFHE_CKKS::CKKSCiphertext> pool_consolidate_and_duplicate_chann
     return output_shards;
 }
 
-boost::python::list pool_image_sharded(std::vector<pyOpenFHE_CKKS::CKKSCiphertext>& shards, int mtx_size, bool conv) {
+py::list pool_image_sharded(std::vector<pyOpenFHE_CKKS::CKKSCiphertext>& shards, int mtx_size, bool conv) {
     int shard_size = shards[0].getBatchSize();
     int channel_size = mtx_size * mtx_size; // assuming square matrices, may want to change this assumption later though
     int num_physical_channels_per_shard = shard_size / channel_size;
@@ -263,17 +265,16 @@ boost::python::list pool_image_sharded(std::vector<pyOpenFHE_CKKS::CKKSCiphertex
     auto output_shards = pool_consolidate_and_duplicate_image_sharded(shards, mtx_size, mtx_size, num_physical_channels_per_shard);
     int num_output_shards = output_shards.size();
 
-    boost::python::list res = pyOpenFHE::make_list(num_output_shards);
+    py::list res = pyOpenFHE::make_list(num_output_shards);
     // #pragma omp parallel for
     for (int s = 0 ; s < num_output_shards; ++s) {
         res[s] = output_shards[s];
     }
 
     return res;
-
 }
 
-boost::python::list pool_channel_sharded(std::vector<pyOpenFHE_CKKS::CKKSCiphertext>& shards, int mtx_size, bool conv) {
+py::list pool_channel_sharded(std::vector<pyOpenFHE_CKKS::CKKSCiphertext>& shards, int mtx_size, bool conv) {
     int shard_size = shards[0].getBatchSize();
     int channel_size = mtx_size * mtx_size; // assuming square matrices, may want to change this assumption later though
     int shards_per_channel = channel_size / shard_size;
@@ -293,23 +294,22 @@ boost::python::list pool_channel_sharded(std::vector<pyOpenFHE_CKKS::CKKSCiphert
     auto output_shards = pool_consolidate_and_duplicate_channel_sharded(shards);
     int num_output_shards = output_shards.size();
 
-    boost::python::list res = pyOpenFHE::make_list(num_output_shards);
+    py::list res = pyOpenFHE::make_list(num_output_shards);
     // #pragma omp parallel for
     for (int s = 0 ; s < num_output_shards; ++s) {
         res[s] = output_shards[s];
     }
 
     return res;
-
 }
 
-boost::python::list pyOpenFHE_CKKS::pool(const boost::python::list &py_shards, int mtx_size, bool conv) {
-    int num_input_shards = len(py_shards);
+py::list pyOpenFHE_CKKS::pool(const py::list &py_shards, int mtx_size, bool conv) {
+    int num_input_shards = static_cast<int>(py_shards.size());
 
     std::vector<pyOpenFHE_CKKS::CKKSCiphertext> shards(num_input_shards);
 
     for (int i = 0 ; i < num_input_shards; ++i) {
-        shards[i] = extract<pyOpenFHE_CKKS::CKKSCiphertext>(py_shards[i]);
+        shards[i] = py_shards[i].cast<pyOpenFHE_CKKS::CKKSCiphertext>();
     }
 
     int shard_size = shards[0].getBatchSize();

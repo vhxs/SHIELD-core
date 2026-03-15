@@ -4,24 +4,17 @@
 #define HE_CNN_UPSAMPLE_H
 
 #include <vector>
-#include <complex>
 
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
 
 #include "boost/multi_array.hpp"
 #include "utils/utils.hpp"
 
-using namespace pyOpenFHE;
-using namespace pyOpenFHE_CKKS;
-using namespace boost::python;
-using namespace boost::python::numpy;
+namespace py = pybind11;
 
 namespace pyOpenFHE_CKKS {
-
-    boost::python::list upsample(const boost::python::list &py_shards, const int mtx_size, const ndarray &permutation, int upsample_type);
-
+    py::list upsample(const py::list &py_shards, const int mtx_size, const py::array_t<double, py::array::forcecast> &permutation, int upsample_type);
 }
-
 
 #endif

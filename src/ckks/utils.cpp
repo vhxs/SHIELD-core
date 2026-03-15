@@ -5,8 +5,6 @@
 #include "utils/utils.hpp"
 
 using namespace pyOpenFHE;
-using namespace boost::python;
-using namespace boost::python::numpy;
 
 // this could be reworked, but not a priority since it works
 int kernel_index_to_shift(int i, int ker_size) {
@@ -25,6 +23,7 @@ int shift_to_kernel_index(int shift, int ker_size) {
             return i;
         }
     }
+    return -1;
 }
 
 // mask gen
@@ -108,7 +107,7 @@ std::vector<int> make_shift_mask_image_sharded(int num_mtxs, int mtx_num_rows, i
     for (int i = 0; i < mtx_area; i++) {
         mask[i] = ud_mask[i] & lr_mask[i];
     }
-    
+
     // tile the mask using std::copy
     tileVector(mask, batch_size);
 
