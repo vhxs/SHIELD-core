@@ -28,8 +28,8 @@ pyOpenFHE_CKKS::CKKSCiphertext pyOpenFHE_CKKS::linear(const py::list &py_shards,
     // do some math
     auto first_shard = shards[0];
 
-    int num_outputs = weights.shape()[0];
-    int num_inputs  = weights.shape()[1];
+    int num_outputs = weights.extent(0);
+    int num_inputs  = weights.extent(1);
     int shard_size = first_shard.getBatchSize();
     int channel_size = mtx_size * mtx_size;
     int num_physical_channels_per_shard = shard_size / channel_size;
@@ -51,7 +51,7 @@ pyOpenFHE_CKKS::CKKSCiphertext pyOpenFHE_CKKS::linear(const py::list &py_shards,
                 int channel_offset = i % channel_size;
                 int idx = logical_channel_idx * channel_size + channel_offset;
 
-                v[i] = weights[r][idx];
+                v[i] = weights(r, idx);
             }
             auto res = shards[s] * v;
 

@@ -8,7 +8,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 
-#include "boost/multi_array.hpp"
 #include "utils/utils.hpp"
 
 namespace py = pybind11;

@@ -40,12 +40,6 @@ RUN git clone https://github.com/fmtlib/fmt.git && \
 # Install numpy
 RUN pip install "numpy<2.0.0"
 
-# Install boost (headers only — used for boost::multi_array)
-RUN set -ex; \
-    wget https://sourceforge.net/projects/boost/files/boost/1.84.0/boost_1_84_0.tar.gz/download -O boost_1_84_0.tar.gz; \
-    tar xzf ./boost_1_84_0.tar.gz; \
-    cp -r boost_1_84_0/boost /usr/local/include/boost
-
 # Install pybind11
 RUN pip install "pybind11[global]>=2.11"
 

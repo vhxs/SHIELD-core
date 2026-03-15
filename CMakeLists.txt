@@ -41,13 +41,12 @@ set(CMAKE_CXX_STANDARD 17)
 
 find_package(OpenFHE)
 find_package(pybind11 CONFIG REQUIRED)
-find_package(Boost REQUIRED)
 
 set (Python_FIND_VIRTUALENV FIRST)
 
 find_package(fmt REQUIRED)
 
-set( CMAKE_CXX_FLAGS "${OpenFHE_CXX_FLAGS} -DBOOST_NO_AUTO_PTR -Wno-error=deprecated-declarations -Wno-error=unused-variable -Wno-error" )
+set( CMAKE_CXX_FLAGS "${OpenFHE_CXX_FLAGS} -Wno-error=deprecated-declarations -Wno-error=unused-variable -Wno-error" )
 set( CMAKE_EXE_LINKER_FLAGS ${OpenFHE_EXE_LINKER_FLAGS} )
 
 message(STATUS "OpenFHE directory: " ${OpenFHE_INCLUDE})
@@ -60,8 +59,6 @@ include_directories( ${OpenFHE_INCLUDE}/core )
 include_directories( ${OpenFHE_INCLUDE}/pke )
 include_directories( ${OpenFHE_INCLUDE}/binfhe )
 include_directories(/openFHE/fmt/include/)
-include_directories(${Boost_INCLUDE_DIRS})
-
 link_directories( ${OpenFHE_LIBDIR} )
 link_directories( ${OPENMP_LIBRARIES} )
 

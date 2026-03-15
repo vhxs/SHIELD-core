@@ -5,7 +5,7 @@ Python bindings for OpenFHE's implementation of CKKS and BGV encryption schemes,
 
 ## Requirements
 
-Bindings are built as a Python wheel file within a Docker container, so Docker is required to build the bindings. All dependencies, including OpenFHE, Boost, fmt, and numpy, are downloaded and installed when building the Docker image. Running the Docker container only builds bindings for x86 architectures; the build process is untested for other architectures like ARM.
+Bindings are built as a Python wheel file within a Docker container, so Docker is required to build the bindings. All dependencies, including OpenFHE, fmt, and numpy, are downloaded and installed when building the Docker image. Running the Docker container only builds bindings for x86 architectures; the build process is untested for other architectures like ARM.
 
 Code was developed and tested on Ubuntu 20.04. While it should run on Windows platforms as well, this has not been explicitly tested.
 

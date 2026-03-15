@@ -101,35 +101,35 @@ std::vector<double> pyOpenFHE::numpyListToCppDoubleVector(const py::array_t<doub
   return std::vector<double>(ptr, ptr + buf.shape[0]);
 }
 
-pyOpenFHE::boost_vector2d pyOpenFHE::numpyArrayToCppArray2D(const py::array_t<double, py::array::forcecast> &nplist) {
+pyOpenFHE::array2d pyOpenFHE::numpyArrayToCppArray2D(const py::array_t<double, py::array::forcecast> &nplist) {
   auto buf = nplist.request();
   if (buf.ndim != 2) {
     throw std::runtime_error(fmt::format(
         "Numpy array must be two-dimensional but had dimension: {}", buf.ndim));
   }
   double *ptr = static_cast<double *>(buf.ptr);
-  pyOpenFHE::boost_vector2d cppVector(boost::extents[buf.shape[0]][buf.shape[1]]);
+  pyOpenFHE::array2d cppVector(buf.shape[0], buf.shape[1]);
   for (ssize_t i0 = 0; i0 < buf.shape[0]; i0++) {
     for (ssize_t i1 = 0; i1 < buf.shape[1]; i1++) {
-      cppVector[i0][i1] = ptr[i0 * buf.shape[1] + i1];
+      cppVector(i0, i1) = ptr[i0 * buf.shape[1] + i1];
     }
   }
   return cppVector;
 }
 
-pyOpenFHE::boost_vector4d pyOpenFHE::numpyArrayToCppArray4D(const py::array_t<double, py::array::forcecast> &nplist) {
+pyOpenFHE::array4d pyOpenFHE::numpyArrayToCppArray4D(const py::array_t<double, py::array::forcecast> &nplist) {
   auto buf = nplist.request();
   if (buf.ndim != 4) {
     throw std::runtime_error(fmt::format(
         "Numpy array must be four-dimensional but had dimension: {}", buf.ndim));
   }
   double *ptr = static_cast<double *>(buf.ptr);
-  pyOpenFHE::boost_vector4d cppVector(boost::extents[buf.shape[0]][buf.shape[1]][buf.shape[2]][buf.shape[3]]);
+  pyOpenFHE::array4d cppVector(buf.shape[0], buf.shape[1], buf.shape[2], buf.shape[3]);
   for (ssize_t i0 = 0; i0 < buf.shape[0]; i0++) {
     for (ssize_t i1 = 0; i1 < buf.shape[1]; i1++) {
       for (ssize_t i2 = 0; i2 < buf.shape[2]; i2++) {
         for (ssize_t i3 = 0; i3 < buf.shape[3]; i3++) {
-          cppVector[i0][i1][i2][i3] = ptr[i0 * buf.strides[0]/sizeof(double)
+          cppVector(i0, i1, i2, i3) = ptr[i0 * buf.strides[0]/sizeof(double)
                                         + i1 * buf.strides[1]/sizeof(double)
                                         + i2 * buf.strides[2]/sizeof(double)
                                         + i3];
