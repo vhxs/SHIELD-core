@@ -21,8 +21,9 @@ import ctypes
 import ctypes.util
 
 # Simulate a library (e.g. torch) pre-loading libomp before pyOpenFHE is imported.
-libomp = ctypes.util.find_library("omp")
-assert libomp is not None, "libomp not found; install via 'brew install libomp'"
+# libomp is keg-only on Homebrew and won't appear in standard library paths,
+# so fall back to the well-known Homebrew prefix if find_library misses it.
+libomp = ctypes.util.find_library("omp") or "/opt/homebrew/opt/libomp/lib/libomp.dylib"
 ctypes.CDLL(libomp)
 
 import numpy as np
