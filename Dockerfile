@@ -40,13 +40,14 @@ RUN git clone https://github.com/fmtlib/fmt.git && \
 # Install numpy
 RUN pip install "numpy<2.0.0"
 
-# Install boost
+# Install boost (headers only — used for boost::multi_array)
 RUN set -ex; \
     wget https://sourceforge.net/projects/boost/files/boost/1.84.0/boost_1_84_0.tar.gz/download -O boost_1_84_0.tar.gz; \
     tar xzf ./boost_1_84_0.tar.gz; \
-    cd boost_1_84_0; \
-    ./bootstrap.sh; \
-    ./b2 install --with-python --prefix=/opt/python/cp310-cp310 -j $(nproc)
+    cp -r boost_1_84_0/boost /usr/local/include/boost
+
+# Install pybind11
+RUN pip install "pybind11[global]>=2.11"
 
 # openFHE is installed, now build the python packages
 RUN mkdir openFHE-python

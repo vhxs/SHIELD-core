@@ -1,17 +1,19 @@
 // (c) 2021-2024 The Johns Hopkins University Applied Physics Laboratory LLC (JHU/APL).
 
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
+
 #include "ckks/CKKS_ciphertext_extension.hpp"
 #include "ckks/cnn/upsample.hpp"
 
 #include <stdexcept>
 #include <fmt/format.h>
-
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
-#include <boost/python/scope.hpp>
 #include <omp.h>
 #include <cstdlib>
 
+namespace py = pybind11;
+using namespace pyOpenFHE;
+using namespace pyOpenFHE_CKKS;
 
 std::vector<pyOpenFHE_CKKS::CKKSCiphertext> upsample_vertical_expand(const std::vector<pyOpenFHE_CKKS::CKKSCiphertext>& shards, int num_rows, int num_cols, int num_physical_channels_per_shard, int duplication_ratio, double fill_value) {
     int num_input_shards = shards.size();
@@ -64,7 +66,7 @@ std::vector<pyOpenFHE_CKKS::CKKSCiphertext> upsample_vertical_expand(const std::
 
     std::vector<std::vector<double>> vertical_masks(num_rows_per_shard_after_upsample, std::vector<double>(shard_size));
     #pragma omp parallel for
-    for (int j = 0; j < num_rows_per_shard_after_upsample; ++j) { // row index 
+    for (int j = 0; j < num_rows_per_shard_after_upsample; ++j) { // row index
         for (int i = 0 ; i < num_cols; ++i) { // column index
     		for (int k = 0; k < num_physical_channels_per_shard; k += 4) { // channel index
     			vertical_masks[j][i + j * num_cols * 4 + k * channel_size] = fill_value;
@@ -100,7 +102,6 @@ std::vector<pyOpenFHE_CKKS::CKKSCiphertext> upsample_vertical_expand(const std::
     }
 
     return new_shards;
-
 }
 
 /*
@@ -127,7 +128,7 @@ void upsample_horizontal_expand(std::vector<pyOpenFHE_CKKS::CKKSCiphertext>& sha
     std::vector<std::vector<double>> horizontal_masks(num_cols, std::vector<double>(shard_size));
     #pragma omp parallel for
     for (int i = 0; i < num_cols; ++i) { // column index
-        for (int j = 0; j < num_rows_per_shard_after_upsample; ++j) { // row index 
+        for (int j = 0; j < num_rows_per_shard_after_upsample; ++j) { // row index
     		for (int k = 0; k < num_physical_channels_per_shard; k += 4) { // channel index
     			horizontal_masks[i][i * 2 + j * num_cols * 4 + k * channel_size] = fill_value;
     		}
@@ -151,7 +152,6 @@ void upsample_horizontal_expand(std::vector<pyOpenFHE_CKKS::CKKSCiphertext>& sha
         }
         shards[s] = ctxt;
     }
-
 }
 
 /*
@@ -168,7 +168,7 @@ void nearest_neighbor_interpolate(std::vector<pyOpenFHE_CKKS::CKKSCiphertext>& s
     }
 }
 
-boost::python::list small_shards_upsample(const std::vector<pyOpenFHE_CKKS::CKKSCiphertext> & shards, const int mtx_size, const ndarray &permutation, int upsample_type) {
+py::list small_shards_upsample(const std::vector<pyOpenFHE_CKKS::CKKSCiphertext> & shards, const int mtx_size, const py::array_t<double, py::array::forcecast> &permutation, int upsample_type) {
 
     int shard_size = shards[0].getBatchSize();
     int channel_size = mtx_size * mtx_size; // assuming square matrices, may want to change this assumption later though
@@ -183,7 +183,7 @@ boost::python::list small_shards_upsample(const std::vector<pyOpenFHE_CKKS::CKKS
     }
 
     double fill_value = 1.0;
-    
+
     auto output_shards = upsample_vertical_expand(shards, mtx_size, mtx_size, num_physical_channels_per_shard, duplication_ratio, fill_value);
     upsample_horizontal_expand(output_shards, mtx_size, mtx_size, fill_value);
 
@@ -201,17 +201,16 @@ boost::python::list small_shards_upsample(const std::vector<pyOpenFHE_CKKS::CKKS
     }
 
     int num_output_shards = output_shards.size();
-    boost::python::list res = pyOpenFHE::make_list(num_output_shards);
+    py::list res = pyOpenFHE::make_list(num_output_shards);
 
     for (int s = 0 ; s < num_output_shards; ++s) {
         res[s] = output_shards[s];
     }
 
     return res;
-
 }
 
-boost::python::list big_shards_upsample(const std::vector<pyOpenFHE_CKKS::CKKSCiphertext> & shards, const int mtx_size, const ndarray &permutation, int upsample_type) {
+py::list big_shards_upsample(const std::vector<pyOpenFHE_CKKS::CKKSCiphertext> & shards, const int mtx_size, const py::array_t<double, py::array::forcecast> &permutation, int upsample_type) {
 
     int shard_size = shards[0].getBatchSize();
 
@@ -220,7 +219,7 @@ boost::python::list big_shards_upsample(const std::vector<pyOpenFHE_CKKS::CKKSCi
     int num_physical_channels_per_shard = 1;
     int duplication_ratio = 1;
     double fill_value = 1.0;
-    
+
     auto output_shards = upsample_vertical_expand(shards, num_rows_per_shard, mtx_size, num_physical_channels_per_shard, duplication_ratio, fill_value);
     upsample_horizontal_expand(output_shards, num_rows_per_shard, mtx_size, fill_value);
 
@@ -238,15 +237,13 @@ boost::python::list big_shards_upsample(const std::vector<pyOpenFHE_CKKS::CKKSCi
     }
 
     int num_output_shards = output_shards.size();
-    boost::python::list res = pyOpenFHE::make_list(num_output_shards);
+    py::list res = pyOpenFHE::make_list(num_output_shards);
 
     for (int s = 0 ; s < num_output_shards; ++s) {
         res[s] = output_shards[s];
     }
 
     return res;
-
-
 }
 
 
@@ -260,26 +257,21 @@ upsample_type:
     = 0 for bed of nails (fill with zeroes)
     = 1 for nearest neighbor
 */
-boost::python::list pyOpenFHE_CKKS::upsample(const boost::python::list &py_shards, const int mtx_size, const ndarray &permutation, int upsample_type){
+py::list pyOpenFHE_CKKS::upsample(const py::list &py_shards, const int mtx_size, const py::array_t<double, py::array::forcecast> &permutation, int upsample_type) {
 
-    int num_input_shards = len(py_shards);
+    int num_input_shards = static_cast<int>(py_shards.size());
     std::vector<pyOpenFHE_CKKS::CKKSCiphertext> shards(num_input_shards);
 
     for (int i = 0 ; i < num_input_shards; ++i) {
-        shards[i] = extract<pyOpenFHE_CKKS::CKKSCiphertext>(py_shards[i]);
+        shards[i] = py_shards[i].cast<pyOpenFHE_CKKS::CKKSCiphertext>();
     }
 
     int shard_size = shards[0].getBatchSize();
     int channel_size = mtx_size * mtx_size; // assuming square matrices, may want to change this assumption later though
 
-
     if (shard_size >= channel_size) {
         return small_shards_upsample(shards, mtx_size, permutation, upsample_type);
-
     } else {
         return big_shards_upsample(shards, mtx_size, permutation, upsample_type);
     }
-
-    return py_shards;
-
 }

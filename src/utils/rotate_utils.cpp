@@ -6,22 +6,10 @@
 #include <stdexcept>
 #include <vector>
 
-// string formatting for exceptions
 #include <fmt/format.h>
-
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
 
 #include "utils/utils.hpp"
 
-using namespace boost::python;
-using namespace boost::python::numpy;
-
-/*
-positive power-of-2 decompose
-represent number as a sum of powers of 2, basically binary notation
-e.g. sumOfPo2s(15) = {8, 4, 2, 1}
-*/
 std::vector<int> sumOfPo2s(int num) {
   std::vector<int> po2s;
   while (num > 0) {
@@ -45,10 +33,6 @@ int last_power_of_two(int num) { return 1 << (num_bits(num) - 1); }
 
 int next_power_of_two(int num) { return 1 << num_bits(num); }
 
-/*
-positive and negative power-of-2 decompose
-e.g. po2Decompose(15) = {16, -1}
-*/
 std::vector<int> po2Decompose(int num) {
   std::vector<int> elts;
 

@@ -4,22 +4,17 @@
 #define HE_CNN_POOL_H
 
 #include <vector>
-#include <complex>
 
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
+#include <pybind11/pybind11.h>
 
 #include "boost/multi_array.hpp"
 #include "utils/utils.hpp"
 #include "ckks/CKKS_ciphertext_extension.hpp"
 
-using namespace pyOpenFHE;
-using namespace boost::python;
-using namespace boost::python::numpy;
+namespace py = pybind11;
 
 namespace pyOpenFHE_CKKS {
-
-    boost::python::list pool(const boost::python::list &py_shards, int mtx_size, bool conv);
+    py::list pool(const py::list &py_shards, int mtx_size, bool conv);
 }
 
 #endif

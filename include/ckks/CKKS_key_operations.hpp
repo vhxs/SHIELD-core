@@ -5,24 +5,21 @@
 #ifndef CKKS_ENCRYPTION_OPENFHE_PYTHON_BINDINGS_H
 #define CKKS_ENCRYPTION_OPENFHE_PYTHON_BINDINGS_H
 
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
 
 #include "ckks/CKKS_ciphertext_extension.hpp"
 #include "utils/utils.hpp"
 
-using namespace boost::python;
-using namespace boost::python::numpy;
+namespace py = pybind11;
 using namespace lbcrypto;
 
 namespace pyOpenFHE_CKKS {
 class CKKSCiphertext;
 
-// CKKS-specific crypto context wrapper
 class CKKSCryptoContext {
 
 public:
-  // reminder to self that CryptoContext = shared_ptr<CryptoContextImpl>
   CryptoContext<DCRTPoly> context;
 
   CKKSCryptoContext(CryptoContext<DCRTPoly> cc) : context(cc){};
@@ -48,13 +45,13 @@ public:
   SCHEME getSchemeId() { return context->getSchemeId(); }
 
   void evalAtIndexKeyGen1(const PrivateKey<DCRTPoly> privateKey,
-                          const list &index_list) {
+                          const py::list &index_list) {
     context->EvalAtIndexKeyGen(
         privateKey, pyOpenFHE::pythonListToCppIntVector(index_list));
   };
 
   void evalAtIndexKeyGen2(const PrivateKey<DCRTPoly> privateKey,
-                          const ndarray &index_list) {
+                          const py::array_t<double, py::array::forcecast> &index_list) {
     context->EvalAtIndexKeyGen(
         privateKey, pyOpenFHE::numpyListToCppIntVector(index_list));
   };
@@ -63,25 +60,25 @@ public:
 
   void evalBootstrapSetup();
   void evalBootstrapKeyGen(const PrivateKey<DCRTPoly> &);
-  list evalBootstrapList(list);
+  py::list evalBootstrapList(py::list);
   pyOpenFHE_CKKS::CKKSCiphertext evalBootstrap(pyOpenFHE_CKKS::CKKSCiphertext);
-  list evalMetaBootstrapList(list);
+  py::list evalMetaBootstrapList(py::list);
   pyOpenFHE_CKKS::CKKSCiphertext evalMetaBootstrap(pyOpenFHE_CKKS::CKKSCiphertext);
 
   Plaintext encode(std::vector<double>);
 
   pyOpenFHE_CKKS::CKKSCiphertext encryptPrivate(const PrivateKey<DCRTPoly> &,
-                                                const list &);
+                                                const py::list &);
   pyOpenFHE_CKKS::CKKSCiphertext encryptPrivate2(const PrivateKey<DCRTPoly> &,
-                                                 const ndarray &);
+                                                 const py::array_t<double, py::array::forcecast> &);
 
   pyOpenFHE_CKKS::CKKSCiphertext encryptPublic(const PublicKey<DCRTPoly> &,
-                                               const list &);
+                                               const py::list &);
   pyOpenFHE_CKKS::CKKSCiphertext encryptPublic2(const PublicKey<DCRTPoly> &,
-                                                const ndarray &);
+                                                const py::array_t<double, py::array::forcecast> &);
 
-  ndarray decrypt(const PrivateKey<DCRTPoly> &,
-                  pyOpenFHE_CKKS::CKKSCiphertext &);
+  py::array_t<double> decrypt(const PrivateKey<DCRTPoly> &,
+                              pyOpenFHE_CKKS::CKKSCiphertext &);
 
   size_t getBatchSize() {
     return context->GetEncodingParams()->GetBatchSize();
@@ -89,9 +86,9 @@ public:
 
   size_t getRingDimension() { return context->GetRingDimension(); };
 
-  ndarray zeroPadToBatchSize(std::vector<double>);
-  ndarray zeroPadToBatchSizeList(const list &);
-  ndarray zeroPadToBatchSizeNumpy(const ndarray &);
+  py::array_t<double> zeroPadToBatchSize(std::vector<double>);
+  py::array_t<double> zeroPadToBatchSizeList(const py::list &);
+  py::array_t<double> zeroPadToBatchSizeNumpy(const py::array_t<double, py::array::forcecast> &);
 
   template <class Archive> void serialize(Archive &ar) { ar(context); };
 };

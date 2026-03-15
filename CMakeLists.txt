@@ -36,17 +36,16 @@ cmake_minimum_required (VERSION 3.21.1)
 
 # set the project name
 project(OpenFHEPythonBindings VERSION 1.0)
-  
+
 set(CMAKE_CXX_STANDARD 17)
 
 find_package(OpenFHE)
+find_package(pybind11 CONFIG REQUIRED)
+find_package(Boost REQUIRED)
 
 set (Python_FIND_VIRTUALENV FIRST)
 
-
 find_package(fmt REQUIRED)
-find_package (Python3 COMPONENTS Interpreter Development)
-find_package (Boost COMPONENTS numpy3 REQUIRED)
 
 set( CMAKE_CXX_FLAGS "${OpenFHE_CXX_FLAGS} -DBOOST_NO_AUTO_PTR -Wno-error=deprecated-declarations -Wno-error=unused-variable -Wno-error" )
 set( CMAKE_EXE_LINKER_FLAGS ${OpenFHE_EXE_LINKER_FLAGS} )
@@ -61,29 +60,20 @@ include_directories( ${OpenFHE_INCLUDE}/core )
 include_directories( ${OpenFHE_INCLUDE}/pke )
 include_directories( ${OpenFHE_INCLUDE}/binfhe )
 include_directories(/openFHE/fmt/include/)
-
-include_directories(${Python3_INCLUDE_DIRS})
-include_directories(${Python3_ROOT_DIR}/include)
 include_directories(${Boost_INCLUDE_DIRS})
 
-link_directories( ${Python3_ROOT_DIR}/lib )
 link_directories( ${OpenFHE_LIBDIR} )
 link_directories( ${OPENMP_LIBRARIES} )
 
-link_libraries( ${OpenFHE_SHARED_LIBRARIES} )
-
 file (GLOB_RECURSE PYTHON_SRC_FILES CONFIGURE_DEPENDS src/*.cpp)
 
-add_library (pythonobj OBJECT ${PYTHON_SRC_FILES})
-set_property(TARGET pythonobj PROPERTY POSITION_INDEPENDENT_CODE 1)
+pybind11_add_module(pyOpenFHE MODULE ${PYTHON_SRC_FILES})
 
-add_library (pyOpenFHE SHARED $<TARGET_OBJECTS:pythonobj>)
-set_property(TARGET pyOpenFHE PROPERTY VERSION 1)
-set_property(TARGET pyOpenFHE PROPERTY SOVERSION 1)
-set_property(TARGET pyOpenFHE PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/)
-set_property(TARGET pyOpenFHE PROPERTY PREFIX "")
+target_link_libraries(pyOpenFHE PRIVATE
+  ${OpenFHE_SHARED_LIBRARIES}
+  ${THIRDPARTYLIBS}
+  ${OpenMP_CXX_FLAGS}
+  fmt::fmt
+)
+
 install(TARGETS pyOpenFHE DESTINATION .)
-
-target_link_directories(pyOpenFHE PUBLIC ${pyOpenFHE_DIR}/lib)
-
-target_link_libraries (pyOpenFHE PUBLIC ${Boost_LIBRARIES} ${THIRDPARTYLIBS} ${OpenMP_CXX_FLAGS} fmt::fmt)

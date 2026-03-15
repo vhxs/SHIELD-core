@@ -3,22 +3,12 @@
 #ifndef HE_CNN_POLY_H
 #define HE_CNN_POLY_H
 
-#include <vector>
-#include <complex>
+#include <pybind11/pybind11.h>
 
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
-
-#include "boost/multi_array.hpp"
-#include "utils/utils.hpp"
-
-using namespace pyOpenFHE;
-using namespace pyOpenFHE_CKKS;
-using namespace boost::python;
-using namespace boost::python::numpy;
+namespace py = pybind11;
 
 namespace pyOpenFHE_CKKS {
-    boost::python::list fhe_gelu(const boost::python::list &py_shards, int degree, double bound);
+    py::list fhe_gelu(const py::list &py_shards, int degree, double bound);
 }
 
 #endif

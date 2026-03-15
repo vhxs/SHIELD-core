@@ -1,26 +1,28 @@
 // (c) 2021-2024 The Johns Hopkins University Applied Physics Laboratory LLC (JHU/APL).
 
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
+
 #include "ckks/CKKS_ciphertext_extension.hpp"
 #include "ckks/cnn/linear.hpp"
 
 #include <stdexcept>
-
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
-#include <boost/python/scope.hpp>
 #include <omp.h>
 #include <cstdlib>
 
-pyOpenFHE_CKKS::CKKSCiphertext pyOpenFHE_CKKS::linear(const boost::python::list &py_shards, const ndarray &npweights, const int mtx_size, const ndarray &permutation, const int pool_factor) {
+namespace py = pybind11;
+using namespace pyOpenFHE;
+
+pyOpenFHE_CKKS::CKKSCiphertext pyOpenFHE_CKKS::linear(const py::list &py_shards, const py::array_t<double, py::array::forcecast> &npweights, const int mtx_size, const py::array_t<double, py::array::forcecast> &permutation, const int pool_factor) {
     auto sigma = numpyListToCppLongIntVector(permutation);
     auto weights = numpyArrayToCppArray2D(npweights);
 
-    int num_shards = len(py_shards);
+    int num_shards = static_cast<int>(py_shards.size());
     std::vector<pyOpenFHE_CKKS::CKKSCiphertext> shards(num_shards);
 
     // #pragma omp parallel for
     for(int i = 0 ; i < num_shards; ++i) {
-        shards[i] = extract<pyOpenFHE_CKKS::CKKSCiphertext>(py_shards[i]);
+        shards[i] = py_shards[i].cast<pyOpenFHE_CKKS::CKKSCiphertext>();
     }
 
     // do some math

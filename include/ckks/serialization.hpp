@@ -7,8 +7,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
+#include <pybind11/pybind11.h>
 
 #include "openfhe.h"
 #include "utils/utils.hpp"
@@ -16,38 +15,38 @@
 #include "ckks/CKKS_ciphertext_extension.hpp"
 #include "ckks/CKKS_key_operations.hpp"
 
+namespace py = pybind11;
 using namespace lbcrypto;
 
 namespace pyOpenFHE_CKKS {
 
-// We turned the Serial::SerType into an enum
 enum class SerType { BINARY, JSON };
 
-PyObject *SerializeToBytes_EvalMultKey_CryptoContext(
+py::bytes SerializeToBytes_EvalMultKey_CryptoContext(
     CKKSCryptoContext &self, const pyOpenFHE_CKKS::SerType sertype);
 bool DeserializeFromBytes_EvalMultKey_CryptoContext(
-    CKKSCryptoContext &self, boost::python::object py_buffer,
+    CKKSCryptoContext &self, py::bytes py_buffer,
     const pyOpenFHE_CKKS::SerType sertype);
-PyObject *SerializeToBytes_EvalAutomorphismKey_CryptoContext(
+py::bytes SerializeToBytes_EvalAutomorphismKey_CryptoContext(
     CKKSCryptoContext &self, const pyOpenFHE_CKKS::SerType sertype);
 bool DeserializeFromBytes_EvalAutomorphismKey_CryptoContext(
-    CKKSCryptoContext &self, boost::python::object py_buffer,
+    CKKSCryptoContext &self, py::bytes py_buffer,
     const pyOpenFHE_CKKS::SerType sertype);
 
-PyObject *SerializeToBytes_Ciphertext(const pyOpenFHE_CKKS::CKKSCiphertext &obj,
+py::bytes SerializeToBytes_Ciphertext(const pyOpenFHE_CKKS::CKKSCiphertext &obj,
                                       const pyOpenFHE_CKKS::SerType sertype);
 pyOpenFHE_CKKS::CKKSCiphertext
-DeserializeFromBytes_Ciphertext(boost::python::object py_buffer,
+DeserializeFromBytes_Ciphertext(py::bytes py_buffer,
                                 const pyOpenFHE_CKKS::SerType sertype);
-PyObject *SerializeToBytes_PublicKey(const PublicKey<DCRTPoly> &obj,
+py::bytes SerializeToBytes_PublicKey(const PublicKey<DCRTPoly> &obj,
                                      const pyOpenFHE_CKKS::SerType sertype);
 PublicKey<DCRTPoly>
-DeserializeFromBytes_PublicKey(boost::python::object py_buffer,
+DeserializeFromBytes_PublicKey(py::bytes py_buffer,
                                const pyOpenFHE_CKKS::SerType sertype);
-PyObject *SerializeToBytes_PrivateKey(const PrivateKey<DCRTPoly> &obj,
+py::bytes SerializeToBytes_PrivateKey(const PrivateKey<DCRTPoly> &obj,
                                       const pyOpenFHE_CKKS::SerType sertype);
 PrivateKey<DCRTPoly>
-DeserializeFromBytes_PrivateKey(boost::python::object py_buffer,
+DeserializeFromBytes_PrivateKey(py::bytes py_buffer,
                                 const pyOpenFHE_CKKS::SerType sertype);
 
 bool SerializeToFile_CryptoContext(const std::string &filename,

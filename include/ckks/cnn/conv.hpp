@@ -4,23 +4,17 @@
 #define HE_CNN_CONV_H
 
 #include <vector>
-#include <complex>
 
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
 
 #include "boost/multi_array.hpp"
 #include "utils/utils.hpp"
 
-using namespace pyOpenFHE;
-using namespace pyOpenFHE_CKKS;
-using namespace boost::python;
-using namespace boost::python::numpy;
+namespace py = pybind11;
 
 namespace pyOpenFHE_CKKS {
-
-    boost::python::list conv2d(const boost::python::list &py_shards, const ndarray &npfilters, int mtx_size, const ndarray &permutation);
-
+    py::list conv2d(const py::list &py_shards, const py::array_t<double, py::array::forcecast> &npfilters, int mtx_size, const py::array_t<double, py::array::forcecast> &permutation);
 }
 
 #endif

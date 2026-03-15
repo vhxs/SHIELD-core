@@ -1,82 +1,30 @@
-﻿// (c) 2021-2024 The Johns Hopkins University Applied Physics Laboratory LLC (JHU/APL).
+// (c) 2021-2024 The Johns Hopkins University Applied Physics Laboratory LLC (JHU/APL).
 
-// python bindings for OpenFHE's CKKS functionality
-
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
-// nested scopes
-#include <boost/python/scope.hpp>
+#include <pybind11/pybind11.h>
 
 #include "ckks/bindings.hpp"
 #include "utils/enums_binding.hpp"
 #include "utils/exceptions.hpp"
 
-using namespace boost::python;
-using namespace boost::python::numpy;
+namespace py = pybind11;
 
-/*
-boost doesn't natively support std::shared_ptr
-anyway, the fix is easy, this will teach it to extract values from
-shared pointers
-*/
-namespace boost {
-template <typename T> T *get_pointer(std::shared_ptr<T> p) { return p.get(); }
-} // namespace boost
+PYBIND11_MODULE(pyOpenFHE, m) {
 
-// where the actual module is defined
-BOOST_PYTHON_MODULE(pyOpenFHE) {
-  Py_Initialize();
+  py::register_exception<pyOpenFHE::not_implemented_exception>(
+      m, "NotImplementedException", PyExc_NotImplementedError);
+  py::register_exception<pyOpenFHE::type_exception>(
+      m, "TypeException", PyExc_TypeError);
 
-  // necessary for numpy to work
-  boost::python::numpy::initialize();
+  auto enums_m = m.def_submodule("enums");
+  pyOpenFHE::export_enums(enums_m);
 
-  // register exception handlers
-  register_exception_translator<pyOpenFHE::not_implemented_exception>(
-      &pyOpenFHE::translate_not_implemented);
-  register_exception_translator<pyOpenFHE::type_exception>(
-      &pyOpenFHE::translate_type_exception);
-  // get outermost scope, not sure if this is necessary
-  scope package = scope();
+  auto CKKS_m = m.def_submodule("CKKS");
+  pyOpenFHE_CKKS::export_CKKS_CryptoContext(CKKS_m);
+  pyOpenFHE_CKKS::export_CKKS_Ciphertext(CKKS_m);
 
-     {
-          using namespace pyOpenFHE;
+  auto serial_m = CKKS_m.def_submodule("serial");
+  pyOpenFHE_CKKS::export_CKKS_serialization(serial_m);
 
-          object enums_module(handle<>(borrowed(PyImport_AddModule("pyOpenFHE.enums"))));
-          package.attr("enums") = enums_module;
-
-          scope enums_scope = enums_module;
-          
-          export_enums_boost();
-     }
-
-     {
-          using namespace pyOpenFHE_CKKS;
-
-          object CKKS_module(handle<>(borrowed(PyImport_AddModule("pyOpenFHE.CKKS"))));
-          package.attr("CKKS") = CKKS_module;
-
-          scope CKKS_scope = CKKS_module;
-
-          export_CKKS_CryptoContext_boost();
-          export_CKKS_Ciphertext_boost();
-
-          {
-               object CKKS_serialization_module(handle<>(borrowed(PyImport_AddModule("pyOpenFHE.CKKS.serial"))));
-               CKKS_scope.attr("serial") = CKKS_serialization_module;
-
-               scope CKKS_serialization_scope = CKKS_serialization_module;
-
-               export_CKKS_serialization_boost();
-          }
-
-          {
-               object CKKS_CNN_module(handle<>(borrowed(PyImport_AddModule("pyOpenFHE.CKKS.CNN"))));
-               CKKS_scope.attr("CNN") = CKKS_CNN_module;
-
-               scope CKKS_CNN_scope = CKKS_CNN_module;
-
-               export_he_cnn_functions_boost();
-          }
-     }
-
+  auto CNN_m = CKKS_m.def_submodule("CNN");
+  pyOpenFHE_CKKS::export_he_cnn_functions(CNN_m);
 }
