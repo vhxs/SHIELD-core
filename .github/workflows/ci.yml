@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: shield-build:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build wheel
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/wheelhouse:/wheelhouse" \
+            shield-build bash -c "
+              set -ex
+              cd /openFHE/openFHE-python
+              uv build --wheel --out-dir /wheelhouse/tmp/
+              LD_LIBRARY_PATH=/opt/python/cp310-cp310/lib auditwheel repair /wheelhouse/tmp/openfhe-*.whl
+              chmod -R 777 /wheelhouse
+            "
+
+      - name: Run tests
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/wheelhouse:/wheelhouse:ro" \
+            -v "${{ github.workspace }}/tests:/tests:ro" \
+            -v "${{ github.workspace }}/pytest.ini:/pytest.ini:ro" \
+            shield-build bash -c "
+              pip install pytest --quiet --root-user-action=ignore
+              pip install /wheelhouse/openfhe-*manylinux*.whl --quiet --root-user-action=ignore
+              cd / && python -m pytest /tests/ -v --tb=short -p no:cacheprovider
+            "
