@@ -10,7 +10,9 @@
 #include "ckks/utils.hpp"
 
 #include <stdexcept>
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 #include <cstdlib>
 
 namespace py = pybind11;

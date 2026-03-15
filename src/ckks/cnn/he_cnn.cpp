@@ -10,7 +10,9 @@
 #include "ckks/cnn/conv.hpp"
 #include "ckks/cnn/linear.hpp"
 #include "ckks/cnn/poly.hpp"
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 
 namespace py = pybind11;
 using namespace pyOpenFHE;
@@ -22,7 +24,9 @@ void pyOpenFHE_CKKS::export_he_cnn_functions(py::module_ &m) {
     m.def("pool", pool);
     m.def("upsample", upsample);
     m.def("fhe_gelu", fhe_gelu);
+#ifdef _OPENMP
     m.def("omp_set_num_threads", omp_set_num_threads);
     m.def("omp_set_nested", omp_set_nested);
     m.def("omp_set_dynamic", omp_set_dynamic);
+#endif
 }

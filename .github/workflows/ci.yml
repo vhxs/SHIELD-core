@@ -47,3 +47,57 @@ jobs:
               pip install /wheelhouse/openfhe-*manylinux*.whl --quiet --root-user-action=ignore
               cd / && python -m pytest /tests/ -v --tb=short -p no:cacheprovider
             "
+
+  test-macos:
+    runs-on: macos-latest  # Apple Silicon (arm64)
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install build tools
+        run: brew install cmake ninja fmt
+
+      - name: Cache OpenFHE build
+        id: cache-openfhe
+        uses: actions/cache@v5
+        with:
+          path: /usr/local
+          key: openfhe-macos-arm64-${{ hashFiles('Dockerfile') }}
+
+      - name: Build and install OpenFHE
+        if: steps.cache-openfhe.outputs.cache-hit != 'true'
+        run: |
+          git clone --recursive https://github.com/openfheorg/openfhe-development.git /tmp/openfhe
+          cmake -S /tmp/openfhe -B /tmp/openfhe/build \
+            -GNinja \
+            -DBUILD_UNITTESTS=OFF \
+            -DBUILD_BENCHMARKS=OFF \
+            -DBUILD_EXAMPLES=OFF \
+            -DWITH_OPENMP=OFF \
+            -DCMAKE_CXX_FLAGS="-Wno-error=unused-variable"
+          ninja -C /tmp/openfhe/build
+          sudo ninja -C /tmp/openfhe/build install
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: pip install uv "numpy>=2.0.0" "pybind11[global]>=2.11" delocate pytest
+
+      - name: Build wheel
+        run: |
+          mkdir -p wheelhouse/tmp
+          uv build --wheel --out-dir wheelhouse/tmp/
+          delocate-wheel -w wheelhouse/ wheelhouse/tmp/openfhe-*.whl
+
+      - name: Install wheel
+        run: pip install wheelhouse/openfhe-*.whl
+
+      # Install libomp to simulate a library (e.g. torch) that pre-loads it.
+      - name: Install libomp for compat test
+        run: brew install libomp
+
+      - name: Run OpenMP compat test
+        run: pytest tests/test_openmp_compat.py -v --tb=short
