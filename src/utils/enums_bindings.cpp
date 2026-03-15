@@ -9,7 +9,6 @@
 #include <boost/python.hpp>
 #include <boost/python/numpy.hpp>
 
-#include "bgv/BGV_key_operations.hpp"
 #include "ckks/CKKS_key_operations.hpp"
 #include "openfhe.h"
 
@@ -29,37 +28,15 @@ void export_enums_boost() {
   class_<PublicKeyImpl<DCRTPoly>, std::shared_ptr<PublicKeyImpl<DCRTPoly>>>(
       "PublicKey")
       .def("getCryptoContext",
-           +[](PublicKeyImpl<DCRTPoly> &self) -> PyObject * {
-             CryptoContext<DCRTPoly> cc = self.GetCryptoContext();
-             if (cc->getSchemeId() == SCHEME::BGVRNS_SCHEME) {
-               auto bgv_cc = pyOpenFHE_BGV::BGVCryptoContext(cc);
-               return to_python_value<decltype(bgv_cc)>()(bgv_cc);
-             } else if (cc->getSchemeId() == SCHEME::CKKSRNS_SCHEME) {
-               auto ckks_cc = pyOpenFHE_CKKS::CKKSCryptoContext(cc);
-               return to_python_value<decltype(ckks_cc)>()(ckks_cc);
-             }
-
-             throw std::runtime_error(
-                 fmt::format("Unsupported encryption scheme: {}",
-                             cc->GetScheme()->SerializedObjectName()));
+           +[](PublicKeyImpl<DCRTPoly> &self) -> pyOpenFHE_CKKS::CKKSCryptoContext {
+             return pyOpenFHE_CKKS::CKKSCryptoContext(self.GetCryptoContext());
            });
 
   class_<PrivateKeyImpl<DCRTPoly>, std::shared_ptr<PrivateKeyImpl<DCRTPoly>>>(
       "PrivateKey")
       .def("getCryptoContext",
-           +[](PrivateKeyImpl<DCRTPoly> &self) -> PyObject * {
-             CryptoContext<DCRTPoly> cc = self.GetCryptoContext();
-             if (cc->getSchemeId() == SCHEME::BGVRNS_SCHEME) {
-               auto bgv_cc = pyOpenFHE_BGV::BGVCryptoContext(cc);
-               return to_python_value<decltype(bgv_cc)>()(bgv_cc);
-             } else if (cc->getSchemeId() == SCHEME::CKKSRNS_SCHEME) {
-               auto ckks_cc = pyOpenFHE_CKKS::CKKSCryptoContext(cc);
-               return to_python_value<decltype(ckks_cc)>()(ckks_cc);
-             }
-
-             throw std::runtime_error(
-                 fmt::format("Unsupported encryption scheme: {}",
-                             cc->GetScheme()->SerializedObjectName()));
+           +[](PrivateKeyImpl<DCRTPoly> &self) -> pyOpenFHE_CKKS::CKKSCryptoContext {
+             return pyOpenFHE_CKKS::CKKSCryptoContext(self.GetCryptoContext());
            });
 
   // combined public/private key. weird that the class is "PrivateKey" but the

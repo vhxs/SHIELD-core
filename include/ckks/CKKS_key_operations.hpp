@@ -50,13 +50,13 @@ public:
   void evalAtIndexKeyGen1(const PrivateKey<DCRTPoly> privateKey,
                           const list &index_list) {
     context->EvalAtIndexKeyGen(
-        privateKey, pyOpenFHE::pythonListToCppIntVector(index_list), nullptr);
+        privateKey, pyOpenFHE::pythonListToCppIntVector(index_list));
   };
 
   void evalAtIndexKeyGen2(const PrivateKey<DCRTPoly> privateKey,
                           const ndarray &index_list) {
     context->EvalAtIndexKeyGen(
-        privateKey, pyOpenFHE::numpyListToCppIntVector(index_list), nullptr);
+        privateKey, pyOpenFHE::numpyListToCppIntVector(index_list));
   };
 
   void evalPowerOf2RotationKeyGen(const PrivateKey<DCRTPoly> &);

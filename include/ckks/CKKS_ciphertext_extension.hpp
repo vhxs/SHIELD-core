@@ -106,7 +106,7 @@ public:
             if (getTowersRemaining() <= towersLeft) {
                 throw std::runtime_error(fmt::format("Cannot compress to {} towers, towers remaining = {}", towersLeft, getTowersRemaining()));
             }
-            auto cipher2 = cipher->GetCryptoContext()->GetScheme()->Compress(cipher, towersLeft);
+            auto cipher2 = cipher->GetCryptoContext()->Compress(cipher, towersLeft);
             return CKKSCiphertext(cipher2);
         }
 

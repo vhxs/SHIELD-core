@@ -1,0 +1,13 @@
+[build-system]
+requires = ["scikit-build-core>=0.9", "cmake>=3.21", "ninja"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "openfhe"
+version = "1.0.5a0"
+description = "Python wrapper for OpenFHE"
+requires-python = ">=3.10"
+dependencies = ["numpy<2.0.0"]
+
+[tool.scikit-build]
+cmake.build-type = "Release"

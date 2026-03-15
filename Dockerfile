@@ -24,8 +24,8 @@ RUN git clone --recursive \
     cd openfhe-development && \
     mkdir openFHE-build && \
     cd openFHE-build && \
-    cmake ../ && \
-    make -j4 && \
+    cmake ../ -DBUILD_UNITTESTS=OFF -DBUILD_BENCHMARKS=OFF -DBUILD_EXAMPLES=OFF && \
+    make -j$(nproc) && \
     make install
 
 
@@ -34,7 +34,7 @@ RUN git clone https://github.com/fmtlib/fmt.git && \
     cd fmt && \
     mkdir _build && cd _build && \
     cmake -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE .. && \
-    make -j4 && \
+    make -j$(nproc) && \
     make install
 
 # Install numpy
@@ -46,18 +46,16 @@ RUN set -ex; \
     tar xzf ./boost_1_84_0.tar.gz; \
     cd boost_1_84_0; \
     ./bootstrap.sh; \
-    ./b2 install --with-python --prefix=/opt/python/cp310-cp310 -j 4
+    ./b2 install --with-python --prefix=/opt/python/cp310-cp310 -j $(nproc)
 
 # openFHE is installed, now build the python packages
 RUN mkdir openFHE-python
 COPY . openFHE-python
-RUN set -ex; \
-    pip install -U ninja wheel setuptools
+RUN pip install -U uv
 CMD set -ex; \
-    pip wheel -e /openFHE/openFHE-python \
-	      -w /wheelhouse/tmp/ \
-	      --no-deps; \
+    cd /openFHE/openFHE-python && \
+    uv build --wheel --out-dir /wheelhouse/tmp/; \
     cd /; \
-    auditwheel repair /wheelhouse/tmp/OpenFHE-*.whl; \
+    LD_LIBRARY_PATH=/opt/python/cp310-cp310/lib auditwheel repair /wheelhouse/tmp/openfhe-*.whl; \
     chmod -R 777 ./wheelhouse
     
