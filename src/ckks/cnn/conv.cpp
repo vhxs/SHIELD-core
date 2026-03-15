@@ -18,25 +18,25 @@ using namespace pyOpenFHE;
 using namespace pyOpenFHE_CKKS;
 
 pyOpenFHE_CKKS::ciphertext_array2d get_all_rotations_image_sharded(pyOpenFHE_CKKS::CKKSCiphertext &ciphertext, int mtx_size, int ker_size) {
-    pyOpenFHE_CKKS::ciphertext_array2d rotations(boost::extents[ker_size][ker_size]);
+    pyOpenFHE_CKKS::ciphertext_array2d rotations(ker_size, ker_size);
 
     int center = shift_to_kernel_index(0, ker_size);
 
     // fill out one row
     for (int j = 0; j < ker_size; j++) {
         int shift = kernel_index_to_shift(j, ker_size);
-        rotations[center][j] = ciphertext << shift;
+        rotations(center, j) = ciphertext << shift;
     }
 
     // fill out the rest
     for (int i = center - 1; i >= 0; i--) {
         for (int j = 0; j < ker_size; j++) {
-            rotations[i][j] = rotations[i+1][j] >> mtx_size;
+            rotations(i, j) = rotations(i+1, j) >> mtx_size;
         }
     }
     for (int i = center + 1; i < ker_size; i++) {
         for (int j = 0; j < ker_size; j++) {
-            rotations[i][j] = rotations[i-1][j] << mtx_size;
+            rotations(i, j) = rotations(i-1, j) << mtx_size;
         }
     }
 
@@ -45,7 +45,7 @@ pyOpenFHE_CKKS::ciphertext_array2d get_all_rotations_image_sharded(pyOpenFHE_CKK
 
 pyOpenFHE_CKKS::ciphertext_array4d get_all_rotations_channel_sharded(std::vector<pyOpenFHE_CKKS::CKKSCiphertext>& all_shards, int shards_per_channel, int mtx_size, int ker_size) {
     int num_channels = all_shards.size() / shards_per_channel;
-    pyOpenFHE_CKKS::ciphertext_array4d rotations(boost::extents[num_channels][shards_per_channel][ker_size][ker_size]);
+    pyOpenFHE_CKKS::ciphertext_array4d rotations(num_channels, shards_per_channel, ker_size, ker_size);
 
     for (int channel_index = 0; channel_index < num_channels; channel_index++) {
         int channel_offset = channel_index * shards_per_channel;
@@ -55,18 +55,18 @@ pyOpenFHE_CKKS::ciphertext_array4d get_all_rotations_channel_sharded(std::vector
             // fill out one row
             for (int j = 0; j < ker_size; j++) {
                 int shift = kernel_index_to_shift(j, ker_size);
-                rotations[channel_index][shard_index][center][j] = all_shards[channel_offset + shard_index] << shift;
+                rotations(channel_index, shard_index, center, j) = all_shards[channel_offset + shard_index] << shift;
             }
 
             // fill out the rest
             for (int i = center - 1; i >= 0; i--) {
                 for (int j = 0; j < ker_size; j++) {
-                    rotations[channel_index][shard_index][i][j] = rotations[channel_index][shard_index][i+1][j] >> mtx_size;
+                    rotations(channel_index, shard_index, i, j) = rotations(channel_index, shard_index, i+1, j) >> mtx_size;
                 }
             }
             for (int i = center + 1; i < ker_size; i++) {
                 for (int j = 0; j < ker_size; j++) {
-                    rotations[channel_index][shard_index][i][j] = rotations[channel_index][shard_index][i-1][j] << mtx_size;
+                    rotations(channel_index, shard_index, i, j) = rotations(channel_index, shard_index, i-1, j) << mtx_size;
                 }
             }
         }
@@ -77,7 +77,7 @@ pyOpenFHE_CKKS::ciphertext_array4d get_all_rotations_channel_sharded(std::vector
 
 // looks and dimensions of 4d filters multiarray to determine duplication factors
 pyOpenFHE_CKKS::CKKSCiphertext convolution_helper_image_sharded(const pyOpenFHE_CKKS::ciphertext_array2d &ciphertext_rotations,
-                                                boost_vector4d &filters,
+                                                const pyOpenFHE::array4d &filters,
                                                 int mtx_size,
                                                 int r,
                                                 int num_in_channels_per_shard,
@@ -86,9 +86,9 @@ pyOpenFHE_CKKS::CKKSCiphertext convolution_helper_image_sharded(const pyOpenFHE_
                                                 int shard_offset,
                                                 std::vector<long int> &sigma) {
     // math!
-    auto ciphertext = ciphertext_rotations[0][0];
+    auto ciphertext = ciphertext_rotations(0, 0);
     int shard_size = ciphertext.getBatchSize();
-    int ker_size = filters.shape()[2]; // assuming square kernels
+    int ker_size = filters.extent(2); // assuming square kernels
     int channel_size = mtx_size * mtx_size;
     int num_physical_channels = shard_size / channel_size;
     int input_dup_factor = shard_size / (num_in_channels_per_shard * channel_size);
@@ -113,7 +113,7 @@ pyOpenFHE_CKKS::CKKSCiphertext convolution_helper_image_sharded(const pyOpenFHE_
                 int adjustment = (input_dup_factor / output_dup_factor);
                 if(adjustment == 0) adjustment = 1;
                 int j = (num_out_channels_per_shard * shard_offset) + (idx / output_dup_factor);
-                kernel_elements[idx] = filters[sigma_i][j][ki][kj];
+                kernel_elements[idx] = filters(sigma_i, j, ki, kj);
             }
 
             // and mask them, possibly with repetition
@@ -122,7 +122,7 @@ pyOpenFHE_CKKS::CKKSCiphertext convolution_helper_image_sharded(const pyOpenFHE_
                 masked_kernel_elements[i] = mask[i] * kernel_elements[idx];
             }
 
-            enc_sum += ciphertext_rotations[ki][kj] * masked_kernel_elements;
+            enc_sum += ciphertext_rotations(ki, kj) * masked_kernel_elements;
         }
     }
 
@@ -132,16 +132,16 @@ pyOpenFHE_CKKS::CKKSCiphertext convolution_helper_image_sharded(const pyOpenFHE_
 }
 
 pyOpenFHE_CKKS::CKKSCiphertext convolution_helper_channel_sharded(pyOpenFHE_CKKS::ciphertext_array4d& rotations,
-                                                                boost_vector4d &filters,
+                                                                const pyOpenFHE::array4d &filters,
                                                                 int mtx_size,
                                                                 int channel_index,
                                                                 int channel_shard_index,
                                                                 int output_channel_index) {
-    auto first_shard = rotations[0][0][0][0];
+    auto first_shard = rotations(0, 0, 0, 0);
     int shard_size = first_shard.getBatchSize();
     int channel_size = mtx_size * mtx_size;
     int shards_per_channel = channel_size / shard_size;
-    int ker_size = filters.shape()[2];
+    int ker_size = filters.extent(2);
 
     int num_rows = mtx_size / shards_per_channel;
     int num_cols = mtx_size;
@@ -178,7 +178,7 @@ pyOpenFHE_CKKS::CKKSCiphertext convolution_helper_channel_sharded(pyOpenFHE_CKKS
 
             auto mask = make_shift_mask_channel_shard(num_rows, num_cols, num_shift_ud, num_shift_lr);
             auto bleed_mask = make_shift_mask_bleed_channel_shard(num_rows, num_cols, num_shift_ud, num_shift_lr);
-            auto kernel_element = filters[channel_index][output_channel_index][ki][kj];
+            auto kernel_element = filters(channel_index, output_channel_index, ki, kj);
 
             // create masked kernel elements
             for (int i = 0; i < shard_size; i++) {
@@ -186,9 +186,9 @@ pyOpenFHE_CKKS::CKKSCiphertext convolution_helper_channel_sharded(pyOpenFHE_CKKS
                 bleed_masked_kernel_elements[i] = bleed_mask[i] * kernel_element;
             }
 
-            enc_sum += rotations[channel_index][channel_shard_index][ki][kj] * masked_kernel_elements;
+            enc_sum += rotations(channel_index, channel_shard_index, ki, kj) * masked_kernel_elements;
             if (bleed_shard_index >= 0) {
-                enc_sum += rotations[channel_index][bleed_shard_index][ki][kj] * bleed_masked_kernel_elements;
+                enc_sum += rotations(channel_index, bleed_shard_index, ki, kj) * bleed_masked_kernel_elements;
             }
         }
     }
@@ -198,7 +198,7 @@ pyOpenFHE_CKKS::CKKSCiphertext convolution_helper_channel_sharded(pyOpenFHE_CKKS
 
 //  or not we have channel shards or not (can pretty easily do this by mathing it out, as below).
 py::list conv2d_image_sharded(std::vector<pyOpenFHE_CKKS::CKKSCiphertext> & shards, const py::array_t<double, py::array::forcecast> &npfilters, int mtx_size, const py::array_t<double, py::array::forcecast> &permutation) {
-    // convert to boost multiarray
+    // convert to MDArray
     auto filters = numpyArrayToCppArray4D(npfilters);
     auto sigma = numpyListToCppLongIntVector(permutation);
 
@@ -210,8 +210,8 @@ py::list conv2d_image_sharded(std::vector<pyOpenFHE_CKKS::CKKSCiphertext> & shar
     int shard_size = first_shard.getBatchSize();
     int channel_size = mtx_size * mtx_size; // assuming square matrices, may want to change this assumption later though
     int num_physical_channels_per_shard = shard_size / channel_size;
-    int num_output_channels = filters.shape()[1];
-    int ker_size = filters.shape()[2];
+    int num_output_channels = filters.extent(1);
+    int ker_size = filters.extent(2);
     int num_output_shards = num_output_channels / num_physical_channels_per_shard;
 
     // if this is true, output_dup_factor > 1
@@ -228,19 +228,21 @@ py::list conv2d_image_sharded(std::vector<pyOpenFHE_CKKS::CKKSCiphertext> & shar
     } else {
         // number of channels in the single shard is the total number of channels,
         // can be determined by looking at dimension of filters
-        num_in_channels_per_shard = filters.shape()[0];
+        num_in_channels_per_shard = filters.extent(0);
     }
     int num_out_channels_per_shard;
     if (num_output_shards > 1) {
         num_out_channels_per_shard = num_physical_channels_per_shard;
     } else {
-        num_out_channels_per_shard = filters.shape()[1];
+        num_out_channels_per_shard = filters.extent(1);
     }
 
     // using convolution_helper, compute one partial output shard at a time
     std::vector<pyOpenFHE_CKKS::CKKSCiphertext> partial_convolutions(num_in_channels_per_shard * num_output_shards * num_input_shards);
 
-    boost::multi_array<pyOpenFHE_CKKS::CKKSCiphertext, 3> all_ciphertext_rotations(boost::extents[num_input_shards][ker_size][ker_size]);
+    // 3D rotation cache: [shard][ki][kj]
+    std::vector<ciphertext_array2d> all_ciphertext_rotations(num_input_shards,
+        ciphertext_array2d(ker_size, ker_size));
     #pragma omp parallel for
     for (int f = 0; f < num_input_shards; f++) {
         all_ciphertext_rotations[f] = get_all_rotations_image_sharded(shards[f], mtx_size, ker_size);
@@ -296,8 +298,8 @@ py::list conv2d_channel_sharded(std::vector<pyOpenFHE_CKKS::CKKSCiphertext> &sha
     int channel_size = mtx_size * mtx_size;
     int shards_per_channel = channel_size / shard_size;
     int num_input_channels = num_input_shards / shards_per_channel;
-    int num_output_channels = filters.shape()[1];
-    int ker_size = filters.shape()[2];
+    int num_output_channels = filters.extent(1);
+    int ker_size = filters.extent(2);
     int num_output_shards = num_output_channels * shards_per_channel;
 
     // cache partial computations here

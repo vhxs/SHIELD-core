@@ -7,14 +7,13 @@
 
 #include <pybind11/pybind11.h>
 
-#include "boost/multi_array.hpp"
 #include "utils/utils.hpp"
 
 namespace py = pybind11;
 
 namespace pyOpenFHE_CKKS {
-    typedef typename boost::multi_array<pyOpenFHE_CKKS::CKKSCiphertext, 2> ciphertext_array2d;
-    typedef typename boost::multi_array<pyOpenFHE_CKKS::CKKSCiphertext, 4> ciphertext_array4d;
+    using ciphertext_array2d = pyOpenFHE::MDArray<pyOpenFHE_CKKS::CKKSCiphertext, 2>;
+    using ciphertext_array4d = pyOpenFHE::MDArray<pyOpenFHE_CKKS::CKKSCiphertext, 4>;
 }
 
 #endif
