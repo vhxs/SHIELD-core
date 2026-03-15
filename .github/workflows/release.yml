@@ -6,10 +6,8 @@ on:
       - 'v*'
 
 jobs:
-  build-wheel:
+  build-linux:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write   # required to create GitHub Releases
 
     steps:
       - uses: actions/checkout@v4
@@ -31,8 +29,6 @@ jobs:
       - name: Build wheel
         run: |
           mkdir -p wheelhouse
-          # Strip the leading 'v' so the Python package version is PEP 440-compliant.
-          # e.g. tag "v1.0.5" → version "1.0.5"
           VERSION="${GITHUB_REF_NAME#v}"
           docker run --rm \
             -v "${{ github.workspace }}/wheelhouse:/wheelhouse" \
@@ -40,6 +36,81 @@ jobs:
             shield-build
 
       - name: Show built wheels
+        run: ls -lh wheelhouse/
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel-linux
+          path: wheelhouse/*.whl
+
+  build-macos:
+    runs-on: macos-latest  # Apple Silicon (arm64)
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: brew install cmake ninja fmt
+
+      - name: Cache OpenFHE build
+        id: cache-openfhe
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/lib/libOPENFHE*.dylib
+          key: openfhe-macos-arm64-${{ hashFiles('Dockerfile') }}
+
+      - name: Build and install OpenFHE
+        if: steps.cache-openfhe.outputs.cache-hit != 'true'
+        run: |
+          git clone --recursive https://github.com/openfheorg/openfhe-development.git /tmp/openfhe
+          cmake -S /tmp/openfhe -B /tmp/openfhe/build \
+            -GNinja \
+            -DBUILD_UNITTESTS=OFF \
+            -DBUILD_BENCHMARKS=OFF \
+            -DBUILD_EXAMPLES=OFF
+          ninja -C /tmp/openfhe/build
+          sudo ninja -C /tmp/openfhe/build install
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: pip install uv "numpy>=2.0.0" "pybind11[global]>=2.11" delocate
+
+      - name: Build wheel
+        run: |
+          mkdir -p wheelhouse/tmp
+          VERSION="${GITHUB_REF_NAME#v}"
+          SKBUILD_PROJECT_VERSION="$VERSION" uv build --wheel --out-dir wheelhouse/tmp/
+          delocate-wheel -w wheelhouse/ wheelhouse/tmp/openfhe-*.whl
+
+      - name: Show built wheels
+        run: ls -lh wheelhouse/
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel-macos
+          path: wheelhouse/*.whl
+
+  release:
+    needs: [build-linux, build-macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # required to create GitHub Releases
+
+    steps:
+      - name: Download all wheels
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wheel-*
+          path: wheelhouse/
+          merge-multiple: true
+
+      - name: Show all wheels
         run: ls -lh wheelhouse/
 
       - name: Create GitHub Release
