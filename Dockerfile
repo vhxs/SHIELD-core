@@ -2,8 +2,8 @@ FROM quay.io/pypa/manylinux_2_34_x86_64
 
 RUN dnf update -y && dnf install -y curl wget
 
-ENV PATH /opt/python/cp310-cp310/bin:${PATH}
-ENV CMAKE_MODULE_PATH /opt/python/cp310-cp310/lib/cmake:/usr/local/lib64/cmake/
+ENV PATH /opt/python/cp312-cp312/bin:${PATH}
+ENV CMAKE_MODULE_PATH /opt/python/cp312-cp312/lib/cmake:/usr/local/lib64/cmake/
 
 #
 # install dependencies
@@ -13,7 +13,7 @@ ENV CMAKE_MODULE_PATH /opt/python/cp310-cp310/lib/cmake:/usr/local/lib64/cmake/
 RUN dnf groupinstall -y 'Development Tools' && \
     dnf install -y autoconf git
 
-RUN pip install cmake && ln -s /opt/python/cp310-cp310/bin/cmake /usr/bin/cmake
+RUN pip install cmake && ln -s /opt/python/cp312-cp312/bin/cmake /usr/bin/cmake
 
 # install openFHE
 # Pull from the early-release version with bootstrapping
@@ -38,7 +38,7 @@ RUN git clone https://github.com/fmtlib/fmt.git && \
     make install
 
 # Install numpy
-RUN pip install "numpy<2.0.0"
+RUN pip install "numpy>=2.0.0"
 
 # Install pybind11
 RUN pip install "pybind11[global]>=2.11"
@@ -51,6 +51,6 @@ CMD set -ex; \
     cd /openFHE/openFHE-python && \
     uv build --wheel --out-dir /wheelhouse/tmp/; \
     cd /; \
-    LD_LIBRARY_PATH=/opt/python/cp310-cp310/lib auditwheel repair -w /wheelhouse/ /wheelhouse/tmp/openfhe-*.whl; \
+    LD_LIBRARY_PATH=/opt/python/cp312-cp312/lib auditwheel repair -w /wheelhouse/ /wheelhouse/tmp/openfhe-*.whl; \
     chmod -R 777 ./wheelhouse
     
