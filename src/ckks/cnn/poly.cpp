@@ -7,7 +7,9 @@
 
 #include <stdexcept>
 #include <fmt/format.h>
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 #include <cstdlib>
 
 #include "math/chebyshev.h"

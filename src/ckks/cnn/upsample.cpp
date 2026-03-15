@@ -8,7 +8,9 @@
 
 #include <stdexcept>
 #include <fmt/format.h>
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 #include <cstdlib>
 
 namespace py = pybind11;
